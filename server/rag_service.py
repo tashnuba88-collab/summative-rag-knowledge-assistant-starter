@@ -25,6 +25,10 @@ def answer_question(question: str) -> dict[str, Any]:
                 "knowledge base to answer that question."
             ),
             "sources": [],
+            "metadata": {
+                "model": Config.GENERATION_MODEL,
+                "retrieved_chunks": 0,
+            },
         }
 
     prompt = build_prompt(question, chunks)
@@ -33,14 +37,16 @@ def answer_question(question: str) -> dict[str, Any]:
     return {
         "answer": answer,
         "sources": format_sources(chunks),
+        "metadata": {
+            "model": Config.GENERATION_MODEL,
+            "retrieved_chunks": len(chunks),
+        },
     }
 
 
 def build_prompt(question: str, chunks: list[dict[str, Any]]) -> str:
     """
     Build a prompt that asks the model to answer using only retrieved context.
-
-    This helper is provided. You may refine it if needed.
     """
     context_blocks = []
 
@@ -75,39 +81,27 @@ Answer:
 
 
 def call_generation_model(prompt: str) -> str:
-    """
-    Send the final prompt to the configured generation model.
-
-    TODO:
-    - Send a POST request to the Ollama generation endpoint.
-    - Use Config.OLLAMA_BASE_URL.
-    - Use Config.GENERATION_MODEL.
-    - Use Config.TEMPERATURE.
-    - Request a non-streaming response.
-    - Return the generated response text.
-
-    Endpoint:
-        POST {OLLAMA_BASE_URL}/api/generate
-
-    Example request body:
-        {
+    """Send the final prompt to the configured generation model."""
+    response = requests.post(
+        f"{Config.OLLAMA_BASE_URL}/api/generate",
+        json={
             "model": Config.GENERATION_MODEL,
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": Config.TEMPERATURE
-            }
-        }
-    """
-    raise NotImplementedError("TODO: Call the configured generation model.")
+                "temperature": Config.TEMPERATURE,
+            },
+        },
+        timeout=300,
+    )
+    response.raise_for_status()
+    data = response.json()
+
+    return data.get("response", "").strip()
 
 
 def format_sources(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Format retrieved chunks for the frontend.
-
-    This helper is provided. You may adjust the excerpt length if needed.
-    """
+    """Format retrieved chunks for the frontend."""
     sources = []
 
     for chunk in chunks:

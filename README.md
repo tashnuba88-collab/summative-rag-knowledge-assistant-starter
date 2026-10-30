@@ -1,382 +1,124 @@
-# Summative Lab: Local RAG-Powered Knowledge Assistant
+# Local RAG-Powered Knowledge Assistant
 
-## Overview
+## Project Description
 
-In this summative lab, you will complete a local full-stack AI application that helps users ask questions about a small approved knowledge base.
+This is a local full-stack app that answers questions about a small set of approved company documents. A React frontend sends a question to a Flask backend. The backend finds the most relevant passages in a Chroma vector database, sends them to a local Ollama model, and returns an answer with the sources it used.
 
-The starter app includes a React frontend, a Flask backend, starter API routes, knowledge base files, environment configuration, and TODO comments in the key backend files. Your job is to complete the backend AI workflow so the frontend can send a question, the backend can retrieve relevant context, and the app can return a source-backed answer.
+Everything runs on one machine. Nothing is deployed.
 
-You will not deploy this application. You will run it locally and focus on connecting the frontend, backend, vector database, model service, and RAG workflow.
+## User Need and Scenario
 
-## Scenario
+Employees need quick answers about onboarding, product support, security practices, and workplace policies. Searching several documents by hand is slow, and a general chatbot can invent policies that do not exist. This assistant answers only from the approved documents and shows the passages it used, so an employee can check where an answer came from. That matters most for security and support procedures, where a wrong answer can cause real mistakes.
 
-Your team is building a local prototype of an internal knowledge assistant. Employees need quick answers from a small set of approved documents, such as onboarding notes, product support guidance, security expectations, and workplace FAQs.
+## Tech Stack
 
-The frontend team has already created a simple chat interface. A user can type a question and submit it. However, the backend AI workflow is incomplete. The app still needs to retrieve relevant knowledge base content, send that context to the model, and return an answer with supporting sources.
-
-Your role is to complete the backend AI functionality so the team can review whether the prototype is useful before deciding what to improve next.
-
-## Learning Goal
-
-You will complete a local full-stack AI application by connecting a React frontend, Flask backend, vector database, knowledge base, and model service into a working RAG workflow that returns useful answers with supporting sources.
-
-By completing this lab, you will:
-
-- Complete a Flask API route that receives user questions.
-- Connect the backend to a local model service.
-- Store and retrieve knowledge base chunks using a vector database.
-- Build a RAG workflow that uses retrieved context to generate an answer.
-- Return both an answer and supporting sources to the frontend.
-- Use environment variables for key configuration values.
-- Document how to install, run, and check the application.
-
-## Scope
-
-This lab focuses on building a local RAG-powered full-stack application.
-
-You are not required to add:
-
-- Authentication
-- Pagination
-- Deployment
-- A new frontend from scratch
-- A large custom knowledge base
-- Automated test files
-
-When this lab asks you to test or check your work, it means you should run the app locally, try sample questions, review the output, and refine the code based on what you observe.
-
-## Tools and Resources
-
-You will use:
-
-- Python 3.10+
-- Flask
-- React + Vite
-- Node.js and npm
-- Chroma or the approved local vector store included in the starter
-- Ollama or another approved local model service
-- Git and GitHub
-- A `.env` file for configuration
-
-Recommended Ollama models:
-
-```bash
-ollama pull llama3.2
-ollama pull nomic-embed-text
-```
+- Python 3.12, Flask, Flask-CORS
+- Chroma (persistent local vector store)
+- Ollama with `llama3.2` for answers and `nomic-embed-text` for embeddings
+- React with Vite
 
 ## Project Structure
 
 ```text
-summative-rag-knowledge-assistant-starter/
-├── client/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── App.jsx
-│       ├── main.jsx
-│       └── styles.css
-├── server/
-│   ├── app.py
-│   ├── config.py
-│   ├── documents.py
-│   ├── rag_service.py
-│   ├── seed_knowledge_base.py
-│   ├── vector_store.py
-│   ├── requirements.txt
-│   ├── Pipfile
-│   ├── .env.example
-│   └── knowledge_base/
-│       ├── onboarding.txt
-│       ├── product_support.txt
-│       ├── security_guidelines.txt
-│       └── workplace_faq.txt
-└── README.md
+client/                  React frontend (Vite)
+server/
+  app.py                 Flask app and /api/ask route
+  config.py              Settings loaded from environment variables
+  documents.py           Loads text files and splits them into chunks
+  vector_store.py        Chroma client, embeddings, seeding, retrieval
+  rag_service.py         RAG workflow: retrieve, build prompt, call model
+  seed_knowledge_base.py Script that loads the knowledge base into Chroma
+  knowledge_base/        onboarding.txt, product_support.txt,
+                         security_guidelines.txt, workplace_faq.txt
+  requirements.txt, Pipfile, .env.example
 ```
 
-## What Is Already Provided
+## Installation
 
-The starter repository includes:
+You need Python 3.10 or newer, Node.js with npm, and Ollama installed and running.
 
-- A React frontend interface
-- A Flask backend structure
-- A working `/api/health` route
-- A starter `/api/ask` route
-- Knowledge base documents in plain text format
-- A document loading and chunking helper
-- Starter files for vector retrieval and RAG workflow code
-- Environment variable examples
-- TODO comments showing where you need to complete the implementation
-
-## What You Need to Complete
-
-You are responsible for completing the main backend AI workflow.
-
-You will complete TODOs in:
-
-- `server/app.py`
-- `server/vector_store.py`
-- `server/rag_service.py`
-
-Your completed app should allow a user to:
-
-1. Open the React frontend.
-2. Type a question about the knowledge base.
-3. Submit the question to the Flask backend.
-4. Retrieve relevant knowledge base chunks from the vector database.
-5. Send the question and retrieved context to the model service.
-6. Receive a generated answer.
-7. View supporting sources in the frontend.
-
----
-
-## Instructions
-
-### Task 1: Define the Problem
-
-Start by reviewing the starter app, scenario, and provided knowledge base documents.
-
-Identify the problem your AI assistant is designed to solve:
-
-- Who will use this assistant?
-- What kind of questions should the assistant help answer?
-- What approved knowledge base content will the assistant use?
-- What should a useful answer include?
-- Why is a source-backed answer important for this use case?
-
-In this README, replace the placeholder section below with a short description of the user need and the purpose of your assistant.
-
-#### Response: Problem Definition
-
-Replace this section with 3–5 sentences that define the problem your assistant helps solve.
-
----
-
-### Task 2: Determine the Design
-
-Plan how the provided frontend, Flask backend, vector database, RAG workflow, and model service will work together.
-
-Review the starter code and identify:
-
-- Where the frontend sends user questions
-- Which backend route receives the question
-- Where the RAG workflow should be completed
-- Where the knowledge base files are stored
-- How source information should be returned
-- Which environment variables are needed
-
-Your design should account for:
-
-- The backend question route
-- Knowledge base loading and chunking
-- Vector database setup
-- Retrieval of relevant chunks
-- Prompt construction
-- Model service connection
-- JSON response format for the frontend
-- Display of answers and sources in the frontend
-
-You do not need to build a new frontend from scratch. Use the provided frontend and make only the adjustments needed to connect it to your completed backend workflow.
-
-#### Response: Design Notes
-
-Replace this section with a short outline or diagram showing how the parts of your application connect.
-
-Example:
-
-```text
-User browser
-→ React frontend
-→ Flask /api/ask route
-→ RAG workflow
-→ Vector database retrieval
-→ Model service
-→ Answer and sources returned to frontend
-```
-
----
-
-### Task 3: Develop, Test, and Refine the Code
-
-Complete the required code so the local full-stack AI assistant works from the frontend through the backend RAG workflow.
-
-Your implementation should:
-
-- Configure your local `.env` file using `.env.example`.
-- Complete the backend route that receives a user question.
-- Load the provided knowledge base documents.
-- Create or update retrievable chunks in the vector database.
-- Preserve source information for returned chunks.
-- Retrieve relevant context based on the user’s question.
-- Build a prompt using the retrieved context.
-- Send the prompt to the model service.
-- Return a JSON response with:
-  - The generated answer
-  - Supporting sources
-  - Any relevant metadata included in the starter structure
-- Connect the backend response to the frontend display.
-
-After developing the core workflow, run the application locally and try at least three sample questions.
-
-For each sample question, check:
-
-- Does the frontend submit the question successfully?
-- Does the backend return a response?
-- Is the answer relevant to the question?
-- Does the response include useful supporting sources?
-- Are there errors in the terminal or browser console?
-- Does anything need to be refined for clarity, relevance, or reliability?
-
-Refine your code based on what you find.
-
-#### Response: Sample Questions and Observations
-
-Replace this section with at least three sample questions and a short note about the answer and sources returned.
-
-| Sample Question | Was the Answer Relevant? | Were Useful Sources Returned? | Notes |
-|---|---|---|---|
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-
----
-
-### Task 4: Document and Maintain
-
-Prepare your project for review and submission.
-
-Your GitHub repository should include:
-
-- Completed backend question route
-- Completed RAG workflow
-- Vector database setup or setup instructions
-- Provided knowledge base documents
-- Working frontend/backend connection
-- `.env.example`
-- Dependency files
-- README
-- Meaningful Git commit history
-
-Your README should include:
-
-- Project title
-- Project description
-- User need or scenario
-- Installation instructions
-- Run instructions
-- Required environment variables
-- API route descriptions
-- Description of the RAG workflow
-- At least three sample questions you tried
-- Notes about whether the answers and sources were relevant
-- Known limitations or future improvements
-
-Before submitting:
-
-1. Save your work with Git.
-2. Commit your changes with meaningful commit messages.
-3. Push your final work to GitHub.
-4. Submit your GitHub repository link in Canvas.
-
----
-
-## Setup Instructions
-
-### 1. Start Ollama
-
-In a terminal, confirm Ollama is running and pull the recommended models:
+1. Pull the models:
 
 ```bash
 ollama pull llama3.2
 ollama pull nomic-embed-text
-ollama run llama3.2 "Reply with one short sentence."
 ```
 
-### 2. Set Up the Flask Backend
-
-From the project root:
+2. Set up the backend:
 
 ```bash
 cd server
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
 
-On Windows PowerShell, activate the virtual environment with:
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-### 3. Complete the Backend TODOs
-
-Open these files and complete the TODO comments:
-
-- `server/app.py`
-- `server/vector_store.py`
-- `server/rag_service.py`
-
-The app will not fully work until these TODOs are completed.
-
-### 4. Seed the Knowledge Base
-
-After completing the vector store TODOs, run:
-
-```bash
-python seed_knowledge_base.py
-```
-
-This script loads the provided knowledge base files, chunks the text, creates embeddings, and stores the chunks in the vector database.
-
-### 5. Run the Flask Backend
-
-```bash
-flask --app app run --debug --port 5555
-```
-
-You should be able to visit:
-
-```text
-http://localhost:5555/api/health
-```
-
-Expected response:
-
-```json
-{
-  "message": "Backend is running.",
-  "status": "ok"
-}
-```
-
-### 6. Set Up and Run the React Frontend
-
-Open a second terminal from the project root:
+3. Set up the frontend:
 
 ```bash
 cd client
 npm install
+```
+
+## Environment Variables
+
+Copy `server/.env.example` to `server/.env`. The defaults work for a standard local setup.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `OLLAMA_BASE_URL` | URL of the local Ollama service | `http://localhost:11434` |
+| `GENERATION_MODEL` | Model that writes answers | `llama3.2` |
+| `EMBEDDING_MODEL` | Model that creates embeddings | `nomic-embed-text` |
+| `CHROMA_PATH` | Folder where Chroma stores vector data | `./chroma_db` |
+| `COLLECTION_NAME` | Name of the Chroma collection | `knowledge_assistant` |
+| `KNOWLEDGE_BASE_PATH` | Folder with the source documents | `./knowledge_base` |
+| `TOP_K` | Number of chunks to retrieve | `3` |
+| `TEMPERATURE` | Controls answer variation | `0.2` |
+| `CLIENT_ORIGIN` | Frontend origin allowed by CORS | `http://localhost:5173` |
+
+## Running the App
+
+Make sure the Ollama app is running.
+
+1. Seed the vector database (run once, and again if the knowledge base files change):
+
+```bash
+cd server
+source .venv/bin/activate
+python seed_knowledge_base.py
+```
+
+You should see 4 documents loaded and 9 chunks stored. The generated `chroma_db` folder is not committed. Rebuild it with the command above.
+
+2. Start the backend:
+
+```bash
+python app.py
+```
+
+3. In a second terminal, start the frontend:
+
+```bash
+cd client
 npm run dev
 ```
 
-Open the local frontend URL shown in your terminal. It is usually:
+4. Open `http://localhost:5173`.
 
-```text
-http://localhost:5173
-```
+## How to Verify the App
 
----
+1. Open `http://localhost:5555/api/health`. It should return `{"message": "Backend is running.", "status": "ok"}`.
+2. Open the frontend. The page should show "Backend is running."
+3. Ask a question that the knowledge base covers. You should get an answer and a list of sources.
+4. Ask a question the knowledge base does not cover. The assistant should say it does not have enough information.
+5. Check the backend terminal and the browser console for errors.
 
 ## API Routes
 
 ### GET `/api/health`
 
-Confirms that the backend is running.
-
-Expected response:
+Confirms the backend is running.
 
 ```json
 {
@@ -387,159 +129,72 @@ Expected response:
 
 ### POST `/api/ask`
 
-Receives a user question and returns an answer with sources.
+Receives a question and returns an answer with sources.
 
-Expected request body:
+Request body:
 
 ```json
 {
-  "question": "What should I do if I cannot log into the product dashboard?"
+  "question": "What should employees do with suspicious emails?"
 }
 ```
 
-Expected response format:
+Response:
 
 ```json
 {
   "answer": "A helpful answer grounded in the knowledge base.",
   "sources": [
     {
-      "title": "Product Support Guide",
-      "source": "product_support.txt",
-      "chunk_index": 0,
+      "title": "Security Guidelines",
+      "source": "security_guidelines.txt",
+      "chunk_index": 1,
       "excerpt": "Relevant source excerpt..."
     }
-  ]
+  ],
+  "metadata": {
+    "model": "llama3.2",
+    "retrieved_chunks": 3
+  }
 }
 ```
 
----
+If the question is missing or blank, the route returns a 400 error with a message. If the RAG workflow fails (for example, Ollama is not running), it returns a 500 error with a message.
 
-## Environment Variables
+## RAG Workflow
 
-Create your local `.env` file from `server/.env.example`.
+1. The seed script loads the four text files in `server/knowledge_base` and splits them into overlapping chunks of about 120 words.
+2. Each chunk gets an embedding from `nomic-embed-text` through Ollama. The chunks are stored in a persistent Chroma collection with their source file, title, and chunk index.
+3. When a question arrives at `/api/ask`, the backend creates an embedding for the question and retrieves the 3 closest chunks.
+4. The backend builds a prompt that tells `llama3.2` to answer only from the retrieved context and to say so when the context is not enough.
+5. The model's answer is returned to the frontend along with the retrieved chunks formatted as sources.
+6. If no chunks are retrieved, the backend returns a "not enough information" message without calling the model.
 
-| Variable | Purpose |
-|---|---|
-| `OLLAMA_BASE_URL` | URL for the local model service |
-| `GENERATION_MODEL` | Model used to generate answers |
-| `EMBEDDING_MODEL` | Model used to create embeddings |
-| `CHROMA_PATH` | Local folder where Chroma stores vector data |
-| `COLLECTION_NAME` | Name of the vector collection |
-| `KNOWLEDGE_BASE_PATH` | Folder containing source documents |
-| `TOP_K` | Number of chunks to retrieve |
-| `TEMPERATURE` | Controls response variation |
-| `CLIENT_ORIGIN` | Local frontend origin allowed by the backend |
-
-Example values:
+## Design Notes
 
 ```text
-OLLAMA_BASE_URL=http://localhost:11434
-GENERATION_MODEL=llama3.2
-EMBEDDING_MODEL=nomic-embed-text
-CHROMA_PATH=./chroma_db
-COLLECTION_NAME=knowledge_assistant
-KNOWLEDGE_BASE_PATH=./knowledge_base
-TOP_K=3
-TEMPERATURE=0.2
-CLIENT_ORIGIN=http://localhost:5173
+User browser
+→ React frontend (localhost:5173)
+→ Flask POST /api/ask (localhost:5555)
+→ rag_service.answer_question
+→ vector_store.retrieve_relevant_chunks (embeds the question, queries Chroma)
+→ Prompt built from the retrieved chunks
+→ Ollama llama3.2 generates the answer
+→ JSON with answer, sources, and metadata returned to the frontend
 ```
 
----
-
-## Knowledge Base Files
-
-The starter app includes these source files:
-
-- `server/knowledge_base/onboarding.txt`
-- `server/knowledge_base/product_support.txt`
-- `server/knowledge_base/security_guidelines.txt`
-- `server/knowledge_base/workplace_faq.txt`
-
-These files are the approved source content for the assistant. The RAG workflow should retrieve from these files and return sources that help users understand where the answer came from.
-
-You may make small edits to the source files if allowed or instructed to by your instructor.
-
----
-
-## RAG Workflow Description
-
-Replace this section with a short explanation of your completed RAG workflow.
-
-Your explanation should include:
-
-- How the app receives a question
-- How the app retrieves relevant chunks
-- How the prompt is built
-- How the model service is called
-- How the answer and sources are returned
-
-Suggested format:
-
-```text
-The frontend sends the user's question to the Flask /api/ask route.
-The backend sends the question to the RAG service.
-The RAG service retrieves relevant chunks from the vector database.
-The retrieved chunks are combined with the user's question in a prompt.
-The prompt is sent to the model service.
-The backend returns the generated answer and supporting sources to the frontend.
-```
-
----
-
-## Sample Questions
-
-Try at least three sample questions after your implementation is complete.
-
-You may use these sample questions or write your own:
-
-1. What should I do if I cannot log into the product dashboard?
-2. Why are source-backed answers important?
-3. What should employees do if they receive a suspicious email?
-4. What should a support agent do if the knowledge base does not answer a customer question?
-5. What should a new employee complete during the first week?
-
-Record your observations in the table below.
+## Sample Questions Tested
 
 | Sample Question | Was the Answer Relevant? | Were Useful Sources Returned? | Notes |
 |---|---|---|---|
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
+| What should employees do with suspicious emails? | Yes | Yes | Gave the three steps from the security guidelines: do not click links or download attachments, report through the security process, and disconnect and notify security if a link was clicked. Two of the three sources were Security Guidelines chunks. The third was an unrelated onboarding chunk. |
+| What should a new employee complete during the first week? | Yes | Yes | Gave a numbered list of first-week tasks and cited the Employee Onboarding Guide. One of the three sources was an unrelated security chunk. |
+| What is on the cafeteria menu today? | Yes | No | The knowledge base has nothing on this. The assistant said it did not have enough information and did not invent a menu. The three sources shown were unrelated chunks. |
 
----
+## Known Limitations and Future Improvements
 
-## Known Limitations or Future Improvements
-
-Replace this section with notes after completing your project.
-
-Examples:
-
-- Improve chunking for longer documents.
-- Add clearer source display in the frontend.
-- Save chat history in a local database.
-- Add user feedback for helpful or unhelpful answers.
-- Improve prompt instructions for unsupported questions.
-- Expand the knowledge base with additional approved documents.
-- Improve error handling when the model service is unavailable.
-
----
-
-## Submission Checklist
-
-Before submitting, confirm that:
-
-- The backend starts successfully.
-- The frontend loads successfully.
-- The frontend can submit a question to the backend.
-- The backend retrieves relevant context from the vector database.
-- The model service returns an answer.
-- The answer is displayed in the frontend.
-- Supporting sources are displayed in the frontend.
-- Your `.env.example` is included.
-- Your actual `.env` file is not committed.
-- Your README is updated with required sections.
-- Your Git commits have meaningful messages.
-- Your final work is pushed to GitHub.
-
-Submit your public GitHub repository link in Canvas.
+- Chroma always returns the closest chunks, even when none match well. Questions outside the knowledge base still show unrelated sources. A distance cutoff in `retrieve_relevant_chunks` would fix this, since the distance is already returned with each chunk.
+- Chunks are split by word count, so some excerpts start or end in the middle of a sentence.
+- The first request can be slow because `llama3.2` runs locally.
+- The knowledge base is only four short documents, so retrieval quality on larger content is untested.
+- Chroma prints a harmless "Failed to send telemetry event" message at startup.
